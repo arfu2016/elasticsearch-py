@@ -142,6 +142,7 @@ def streaming_bulk(client, actions, chunk_size=500, max_chunk_bytes=100 * 1024 *
                    max_backoff=600, yield_ok=True, *args, **kwargs):
 
     """
+    单线程，如果是很大的数据，则多次传到elastic数据库上去
     Streaming bulk consumes actions from the iterable passed in and yields
     results per action. For non-streaming usecases use
     :func:`~elasticsearch.helpers.bulk` which is a wrapper around streaming
@@ -221,6 +222,7 @@ def streaming_bulk(client, actions, chunk_size=500, max_chunk_bytes=100 * 1024 *
 
 def bulk(client, actions, stats_only=False, *args, **kwargs):
     """
+    单线程一次，如果数据太大是不适合的
     Helper for the :meth:`~elasticsearch.Elasticsearch.bulk` api that provides
     a more human friendly interface - it consumes an iterator of actions and
     sends them to elasticsearch in chunks. It returns a tuple with summary
@@ -269,6 +271,7 @@ def parallel_bulk(client, actions, thread_count=4, chunk_size=500,
         max_chunk_bytes=100 * 1024 * 1024, queue_size=4,
         expand_action_callback=expand_action, *args, **kwargs):
     """
+    如果是很大的数据，则多次传到elastic数据库上去，但这种多次是多个线程同时完成的
     Parallel version of the bulk helper run in multiple threads at once.
 
     :arg client: instance of :class:`~elasticsearch.Elasticsearch` to use
@@ -296,6 +299,7 @@ def parallel_bulk(client, actions, thread_count=4, chunk_size=500,
         def _setup_queues(self):
             super(BlockingPool, self)._setup_queues()
             self._inqueue = Queue(queue_size)
+            # Queue是线程安全的，可作为多线程操作的对象，避免了自己设置多线程安全
             self._quick_put = self._inqueue.put
 
     pool = BlockingPool(thread_count)
